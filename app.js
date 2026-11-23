@@ -1,5 +1,5 @@
 // ============================================================
-// Morse Studio — Interactive Binary Tree Decoder & Translator
+// Morse Studio 3D — Interactive Binary Tree Decoder & Translator
 // ============================================================
 
 (() => {
@@ -108,11 +108,16 @@
   const infoPanel = document.getElementById('info-panel');
   const btnPlayActiveNode = document.getElementById('btn-play-active-node');
 
+  const treeStage = document.getElementById('tree-stage');
+  const treeBoard3d = document.getElementById('tree-board-3d');
   const treeScrollContainer = document.getElementById('tree-scroll-container');
   const treeWrapper = document.getElementById('tree-wrapper');
+  const btnToggle3d = document.getElementById('btn-toggle-3d');
   const btnFitTree = document.getElementById('btn-fit-tree');
 
   const tapArea = document.getElementById('tap-area');
+  const telegraphPaddle3d = document.getElementById('telegraph-paddle-3d');
+  const signalLed3d = document.getElementById('signal-led-3d');
   const inputSymbols = document.getElementById('input-symbols');
   const inputPreview = document.getElementById('input-preview');
   const previewChar = document.getElementById('input-preview-char');
@@ -162,7 +167,25 @@
   let isMuted = false;
   let activeSelectedLetter = '';
   let isTreeFitMode = true;
+  let is3dMode = true;
   let lastDrawerTrigger = null;
+  let ledFlashTimer = null;
+
+  const prefersReducedMotion = () =>
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- 3D Hardware LED & Paddle Feedback ----
+  function flashSignalHardware(symbol, durationMs = 150) {
+    if (ledFlashTimer) clearTimeout(ledFlashTimer);
+    signalLed3d.classList.remove('led-dot', 'led-dash');
+    signalLed3d.classList.add(symbol === '-' ? 'led-dash' : 'led-dot');
+    telegraphPaddle3d.classList.add('active');
+
+    ledFlashTimer = setTimeout(() => {
+      signalLed3d.classList.remove('led-dot', 'led-dash');
+      telegraphPaddle3d.classList.remove('active');
+    }, durationMs);
+  }
 
   // ---- Tree Geometry Helpers ----
   function level(i) { return Math.floor(Math.log2(i)); }
@@ -500,6 +523,11 @@
           osc.stop(tempTime + dur);
         }
 
+        const ledTimer = setTimeout(() => {
+          flashSignalHardware(sym, Math.max(80, dur * 1000));
+        }, Math.max(0, (tempTime - ctx.currentTime) * 1000));
+        activeAudioPlaybackTimeouts.push(ledTimer);
+
         tempTime += dur + symbolGap;
         charDuration += dur + symbolGap;
       }
@@ -629,7 +657,6 @@
       inputSymbols.textContent = symbolsStr;
     }
 
-    // Live partial path highlight on the binary tree!
     if (inputBuffer.length > 0) {
       const partialIdx = findPartialNodeIndex(inputBuffer);
       if (partialIdx) {
@@ -637,7 +664,6 @@
       }
     }
 
-    // Live decoded letter preview badge
     const letter = MORSE_TO_LETTER[inputBuffer];
     if (inputBuffer.length > 0) {
       inputPreview.classList.remove('hidden');
@@ -731,6 +757,7 @@
     if (phraseTimer) clearTimeout(phraseTimer);
 
     playTone(symbol === '.' ? 0.06 : 0.18, toneFreq);
+    flashSignalHardware(symbol, symbol === '.' ? 130 : 240);
     inputBuffer += symbol;
     updateInputDisplay();
     resetDecodeTimer();
@@ -742,6 +769,9 @@
     keyDownTime = performance.now();
 
     tapArea.classList.add('pressing');
+    telegraphPaddle3d.classList.add('active');
+    signalLed3d.classList.remove('led-dash');
+    signalLed3d.classList.add('led-dot');
     keyFill.style.width = '0%';
     keyFill.classList.remove('dot-zone', 'dash-zone');
     keyFill.classList.add('dot-zone');
@@ -757,6 +787,8 @@
       if (elapsed >= DASH_THRESHOLD) {
         keyFill.classList.remove('dot-zone');
         keyFill.classList.add('dash-zone');
+        signalLed3d.classList.remove('led-dot');
+        signalLed3d.classList.add('led-dash');
       }
     }, 16);
   }
@@ -765,6 +797,8 @@
     if (!isKeyDown) return;
     isKeyDown = false;
     tapArea.classList.remove('pressing');
+    telegraphPaddle3d.classList.remove('active');
+    signalLed3d.classList.remove('led-dot', 'led-dash');
 
     clearInterval(holdInterval);
     keyFill.style.width = '0%';
@@ -890,6 +924,61 @@
     });
   }
 
+  // ---- 3D Spatial Parallax & Mode Controller ----
+  function initSpatial3D() {
+    treeStage.addEventListener('pointermove', (e) => {
+      if (!is3dMode || prefersReducedMotion()) return;
+      const rect = treeBoard3d.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;  // -1 .. 1
+      const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;  // -1 .. 1
+      const rx = (10 - ny * 4.5).toFixed(2);
+      const ry = (nx * 5.5).toFixed(2);
+      const gx = (((e.clientX - rect.left) / rect.width) * 100).toFixed(1);
+      const gy = (((e.clientY - rect.top) / rect.height) * 100).toFixed(1);
+
+      treeBoard3d.style.setProperty('--rx', `${rx}deg`);
+      treeBoard3d.style.setProperty('--ry', `${ry}deg`);
+      treeBoard3d.style.setProperty('--glare-x', `${gx}%`);
+      treeBoard3d.style.setProperty('--glare-y', `${gy}%`);
+    });
+
+    treeStage.addEventListener('pointerleave', () => {
+      treeBoard3d.style.setProperty('--rx', '10deg');
+      treeBoard3d.style.setProperty('--ry', '0deg');
+      treeBoard3d.style.setProperty('--glare-x', '50%');
+      treeBoard3d.style.setProperty('--glare-y', '30%');
+    });
+
+    infoPanel.addEventListener('pointermove', (e) => {
+      if (prefersReducedMotion()) return;
+      const rect = infoPanel.getBoundingClientRect();
+      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+      infoPanel.style.setProperty('--hud-rx', `${(-ny * 5).toFixed(2)}deg`);
+      infoPanel.style.setProperty('--hud-ry', `${(nx * 6).toFixed(2)}deg`);
+    });
+
+    infoPanel.addEventListener('pointerleave', () => {
+      infoPanel.style.setProperty('--hud-rx', '0deg');
+      infoPanel.style.setProperty('--hud-ry', '0deg');
+    });
+  }
+
+  function toggle3dMode() {
+    is3dMode = !is3dMode;
+    btnToggle3d.setAttribute('aria-pressed', String(is3dMode));
+    treeBoard3d.classList.toggle('is-3d-active', is3dMode);
+    if (!is3dMode) {
+      treeBoard3d.style.setProperty('--rx', '0deg');
+      treeBoard3d.style.setProperty('--ry', '0deg');
+    } else {
+      treeBoard3d.style.setProperty('--rx', '10deg');
+      treeBoard3d.style.setProperty('--ry', '0deg');
+    }
+  }
+
   // ---- Responsive Tree Fit/Zoom ----
   function centerScroll() {
     if (isTreeFitMode) {
@@ -917,7 +1006,6 @@
 
   // ---- Event Listeners ----
   function attachEvents() {
-    // Tree node hover, keyboard focus & click/activation
     for (let i = 1; i < TREE.length; i++) {
       if (!TREE[i]) continue;
       const g = nodeEls[i];
@@ -956,7 +1044,6 @@
       }
     });
 
-    // Global keyboard input (Spacebar, Backspace, Enter, Escape)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeAllDrawers();
@@ -1010,7 +1097,6 @@
       }
     });
 
-    // Tap pad pointer events
     let tapDown = 0;
     tapArea.addEventListener('pointerdown', (e) => {
       e.preventDefault();
@@ -1029,16 +1115,25 @@
       if (isKeyDown) {
         isKeyDown = false;
         tapArea.classList.remove('pressing');
+        telegraphPaddle3d.classList.remove('active');
+        signalLed3d.classList.remove('led-dot', 'led-dash');
         clearInterval(holdInterval);
         keyFill.style.width = '0%';
       }
     });
 
-    // Direct dot/dash tactile buttons
-    btnInsertDot.addEventListener('click', () => pushMorseSymbol('.'));
-    btnInsertDash.addEventListener('click', () => pushMorseSymbol('-'));
+    btnInsertDot.addEventListener('click', () => {
+      btnInsertDot.classList.add('keycap-pressed');
+      setTimeout(() => btnInsertDot.classList.remove('keycap-pressed'), 120);
+      pushMorseSymbol('.');
+    });
 
-    // HUD & Message console actions
+    btnInsertDash.addEventListener('click', () => {
+      btnInsertDash.classList.add('keycap-pressed');
+      setTimeout(() => btnInsertDash.classList.remove('keycap-pressed'), 180);
+      pushMorseSymbol('-');
+    });
+
     btnPlayActiveNode.addEventListener('click', () => {
       if (activeSelectedLetter) playMorse(activeSelectedLetter);
     });
@@ -1069,7 +1164,6 @@
       }
     });
 
-    // Audio & Tree settings
     wpmSelect.addEventListener('change', (e) => {
       speedMultiplier = parseFloat(e.target.value) || 1;
     });
@@ -1085,9 +1179,9 @@
       muteIcon.textContent = isMuted ? '🔇' : '🔊';
     });
 
+    btnToggle3d.addEventListener('click', toggle3dMode);
     btnFitTree.addEventListener('click', toggleTreeFit);
 
-    // Translator events
     translatorTextInput.addEventListener('input', updateLiveTranslation);
     btnPlayTranslated.addEventListener('click', () => {
       const targetText = translatorPlainText || translatorTextInput.value;
@@ -1097,7 +1191,6 @@
       copyWithFeedback(btnCopyTranslated, translatorMorseOutput.textContent)
     );
 
-    // Toggles
     phraseCategoryToggle.addEventListener('change', (e) => {
       const checked = e.target.checked;
       const category = checked ? 'basico' : 'emergencia';
@@ -1116,7 +1209,6 @@
       updateInputDisplay();
     });
 
-    // Drawers
     btnToggleLeftDrawer.addEventListener('click', openLeftDrawer);
     btnToggleRightDrawer.addEventListener('click', openRightDrawer);
     btnCloseLeft.addEventListener('click', () => closeLeftDrawer(true));
@@ -1127,6 +1219,7 @@
   function init() {
     buildTree();
     attachEvents();
+    initSpatial3D();
     renderPresets('emergencia');
     requestAnimationFrame(() => requestAnimationFrame(centerScroll));
     window.addEventListener('resize', centerScroll);

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Morse Studio — Binary Tree Decoder</title>
-  <meta name="description" content="Decodificador e intérprete interactivo de Código Morse con árbol binario, audio sintetizado y diseño espacial estilo Apple.">
+  <title>Morse Studio 3D — Binary Tree Decoder</title>
+  <meta name="description" content="Decodificador e intérprete interactivo de Código Morse en 3D con árbol binario espacial, audio sintetizado y diseño claro estilo Apple.">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,10 +18,11 @@
             mono: ['SF Mono', 'ui-monospace', 'Menlo', 'Monaco', 'Consolas', 'monospace']
           },
           colors: {
-            midnight: '#05060b',
+            'apple-silver': '#f5f5f7',
+            'apple-ink': '#1d1d1f',
             'apple-blue': '#0071e3',
-            'apple-cyan': '#64d2ff',
-            'apple-amber': '#ff9f0a'
+            'apple-cyan': '#0284c7',
+            'apple-amber': '#d97706'
           }
         }
       }
@@ -29,9 +30,9 @@
   </script>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-midnight text-white font-sans min-h-screen overflow-x-hidden antialiased selection:bg-[#0071e3]/40 selection:text-white">
+<body class="bg-apple-silver text-apple-ink font-sans min-h-screen overflow-x-hidden antialiased selection:bg-[#0071e3]/20 selection:text-[#1d1d1f]">
 
-  <!-- Cupertino Spatial Wallpaper Glows -->
+  <!-- Apple Daylight Spatial Wallpaper Glows -->
   <div class="ambient-glow ambient-glow--1" aria-hidden="true"></div>
   <div class="ambient-glow ambient-glow--2" aria-hidden="true"></div>
   <div class="ambient-glow ambient-glow--3" aria-hidden="true"></div>
@@ -46,8 +47,8 @@
         <div class="flex items-center gap-2.5 pl-1">
           <span class="brand-dot" aria-hidden="true"></span>
           <div class="flex flex-col text-left leading-tight">
-            <span class="text-xs font-semibold tracking-tight text-white/95">Morse Studio</span>
-            <span class="text-[10px] font-medium tracking-wider uppercase text-white/45">ITU-R M.1677</span>
+            <span class="text-xs font-semibold tracking-tight text-[#1d1d1f]">Morse Studio 3D</span>
+            <span class="text-[10px] font-medium tracking-wider uppercase text-[#86868b]">ITU-R M.1677</span>
           </div>
         </div>
 
@@ -107,30 +108,30 @@
 
     <!-- Hero Header -->
     <header id="app-header" class="relative z-20 pt-6 pb-3 px-4 text-center select-none">
-      <h1 class="text-3xl sm:text-5xl font-semibold tracking-tight text-white">
-        Morse <span class="apple-title-gradient font-medium">Binary Tree</span>
+      <h1 class="text-3xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f]">
+        Morse <span class="apple-title-gradient font-semibold">Binary Tree</span>
       </h1>
-      <p class="mt-2.5 text-sm font-normal text-white/55 max-w-lg mx-auto leading-relaxed">
-        Explora el árbol binario o pulsa tu señal.
-        <span class="text-[#ff9f0a]/90 font-medium">Izquierda = raya (—)</span>
-        <span class="text-white/25 mx-1.5">·</span>
-        <span class="text-[#64d2ff]/90 font-medium">Derecha = punto (·)</span>
+      <p class="mt-2.5 text-sm font-normal text-[#515154] max-w-lg mx-auto leading-relaxed">
+        Explora el árbol espacial en 3D o pulsa tu señal.
+        <span class="text-[#d97706] font-semibold">Izquierda = raya (—)</span>
+        <span class="text-[#86868b] mx-1.5">·</span>
+        <span class="text-[#0284c7] font-semibold">Derecha = punto (·)</span>
       </p>
     </header>
 
-    <!-- Apple Dynamic Island HUD -->
+    <!-- Apple 3D Dynamic Island HUD -->
     <section aria-label="Inspector del carácter seleccionado" class="relative z-20 px-4 mt-2">
       <div id="info-panel" class="glass-panel dynamic-island mx-auto select-none">
         <div class="flex items-center justify-between gap-5">
           <div class="flex items-center gap-4 min-w-0">
-            <div id="info-char" class="dynamic-island-char text-4xl font-semibold tracking-tight text-white/95">—</div>
-            <div class="h-9 w-px bg-white/12 shrink-0" aria-hidden="true"></div>
+            <div id="info-char" class="dynamic-island-char text-4xl font-semibold tracking-tight text-[#1d1d1f]">—</div>
+            <div class="h-9 w-px bg-slate-900/10 shrink-0" aria-hidden="true"></div>
             <div class="text-left min-w-0">
               <div class="flex items-center gap-2 mb-0.5">
-                <span class="text-[10px] font-semibold tracking-[0.16em] uppercase text-white/40">Morse</span>
+                <span class="text-[10px] font-semibold tracking-[0.16em] uppercase text-[#86868b]">Morse</span>
                 <span id="info-phonetic" class="nato-badge">Listo</span>
               </div>
-              <p id="info-code" class="text-lg font-mono font-medium text-[#64d2ff]/90 tracking-[0.28em] truncate">···</p>
+              <p id="info-code" class="text-lg font-mono font-semibold text-[#0071e3] tracking-[0.28em] truncate">···</p>
             </div>
           </div>
 
@@ -152,11 +153,11 @@
       <!-- Apple Input Mode Bar -->
       <div class="glass-panel glass-panel--subtle flex items-center justify-between px-4 py-3 mb-3">
         <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full bg-[#2997ff]" aria-hidden="true"></span>
-          <span class="text-[11px] font-semibold tracking-[0.14em] uppercase text-white/60">Modo de Entrada</span>
+          <span class="w-2 h-2 rounded-full bg-[#0071e3]" aria-hidden="true"></span>
+          <span class="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#515154]">Modo de Entrada</span>
         </div>
         <div class="flex items-center gap-3">
-          <label for="input-mode-toggle" id="input-mode-label" class="text-xs font-medium tracking-wide text-white/85 cursor-pointer">Letra a Letra</label>
+          <label for="input-mode-toggle" id="input-mode-label" class="text-xs font-semibold tracking-wide text-[#1d1d1f] cursor-pointer">Letra a Letra</label>
           <label class="apple-switch">
             <input type="checkbox" id="input-mode-toggle" aria-labelledby="input-mode-label">
             <span class="apple-switch-track" aria-hidden="true">
@@ -166,19 +167,33 @@
         </div>
       </div>
 
-      <!-- Tactile Telegraph Pad -->
+      <!-- 3D Tactile Telegraph Pad -->
       <div id="tap-area" class="glass-panel tap-area" tabindex="0" role="button" aria-label="Pulsa espacio o haz clic aquí para introducir puntos y rayas Morse">
         <div class="flex items-center justify-between gap-4">
           <div class="flex-1 min-w-0">
-            <p class="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40 mb-1">Entrada Telegráfica en Vivo</p>
+            <div class="flex items-center gap-2 mb-1">
+              <span id="signal-led-3d" class="signal-led-3d" aria-hidden="true"></span>
+              <p class="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#86868b]">Entrada Telegráfica 3D en Vivo</p>
+            </div>
             <div class="flex items-center gap-2 h-9">
-              <span id="input-symbols" class="text-2xl font-mono font-medium text-white/95 tracking-[0.32em] truncate"></span>
+              <span id="input-symbols" class="text-2xl font-mono font-semibold text-[#1d1d1f] tracking-[0.32em] truncate"></span>
               <span id="input-cursor" class="input-cursor" aria-hidden="true"></span>
             </div>
           </div>
-          <!-- Live Decoded Letter Preview -->
-          <div id="input-preview" class="input-preview-letter hidden" aria-live="polite">
-            <span id="input-preview-char">?</span>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <!-- 3D Mechanical Telegraph Paddle Visual -->
+            <div id="telegraph-paddle-3d" class="telegraph-paddle-3d" aria-hidden="true">
+              <div class="paddle-base"></div>
+              <div class="paddle-arm">
+                <span class="paddle-knob"></span>
+              </div>
+            </div>
+
+            <!-- Live Decoded Letter Preview -->
+            <div id="input-preview" class="input-preview-letter hidden" aria-live="polite">
+              <span id="input-preview-char">?</span>
+            </div>
           </div>
         </div>
 
@@ -188,31 +203,31 @@
             <div id="key-fill" class="key-fill"></div>
             <div class="key-threshold-marker" title="Umbral 180ms: Punto / Raya" aria-hidden="true"></div>
           </div>
-          <div class="flex items-center justify-between text-[10px] text-white/35 mt-2">
-            <span><kbd class="kbd-hint">Espacio</kbd> o mantener pulsado</span>
+          <div class="flex items-center justify-between text-[10px] text-[#6e6e73] mt-2">
+            <span><kbd class="kbd-hint">Espacio</kbd> o mantener pulsado el manipulador</span>
             <span>&lt;180ms Punto · &ge;180ms Raya</span>
           </div>
         </div>
       </div>
 
-      <!-- Direct Tactile Buttons (for effortless mobile & one-tap input) -->
-      <div class="grid grid-cols-2 gap-2.5 mt-2.5">
-        <button type="button" id="btn-insert-dot" class="tactile-key-btn tactile-key-btn--dot">
-          <span class="text-lg leading-none" aria-hidden="true">·</span>
+      <!-- Extruded 3D Keycaps -->
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <button type="button" id="btn-insert-dot" class="keycap-3d keycap-3d--dot">
+          <span class="text-lg leading-none font-bold" aria-hidden="true">·</span>
           <span>Punto</span>
-          <span class="text-[10px] font-normal text-white/45">(Corto)</span>
+          <span class="text-[10px] font-medium text-[#6e6e73]">(Corto)</span>
         </button>
-        <button type="button" id="btn-insert-dash" class="tactile-key-btn tactile-key-btn--dash">
-          <span class="text-lg leading-none" aria-hidden="true">—</span>
+        <button type="button" id="btn-insert-dash" class="keycap-3d keycap-3d--dash">
+          <span class="text-lg leading-none font-bold" aria-hidden="true">—</span>
           <span>Raya</span>
-          <span class="text-[10px] font-normal text-white/45">(Largo)</span>
+          <span class="text-[10px] font-medium text-[#6e6e73]">(Largo)</span>
         </button>
       </div>
 
       <!-- Decoded Message Console -->
-      <div id="message-area" class="glass-panel message-area mt-3">
+      <div id="message-area" class="glass-panel message-area mt-3.5">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <p class="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Mensaje Decodificado</p>
+          <p class="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#86868b]">Mensaje Decodificado</p>
           <div class="flex flex-wrap gap-1.5">
             <button type="button" id="btn-play-message" class="action-btn" title="Reproducir mensaje decodificado">
               <span>▶ Reproducir</span>
@@ -228,15 +243,15 @@
             </button>
           </div>
         </div>
-        <p id="decoded-message" class="text-lg font-mono font-normal text-white/90 tracking-[0.16em] min-h-[28px] break-all" aria-live="polite"></p>
+        <p id="decoded-message" class="text-lg font-mono font-medium text-[#1d1d1f] tracking-[0.16em] min-h-[28px] break-all" aria-live="polite"></p>
       </div>
     </section>
 
-    <!-- Tree Viewport Controls + SVG Binary Tree -->
+    <!-- 3D Spatial Tree Viewport -->
     <main id="tree-container" class="relative z-10 w-full flex-1 pb-8 pt-3">
       <!-- Viewport Toolbar -->
-      <div class="mx-auto max-w-5xl px-4 mb-2 flex flex-wrap items-center justify-between gap-2 select-none">
-        <div class="flex items-center gap-2 text-[11px] text-white/55">
+      <div class="mx-auto max-w-5xl px-4 mb-1 flex flex-wrap items-center justify-between gap-2 select-none">
+        <div class="flex items-center gap-2 text-[11px] font-medium text-[#515154]">
           <span class="legend-chip legend-chip--dash">
             <span class="legend-dot legend-dot--dash" aria-hidden="true"></span>
             Izquierda: Raya (—)
@@ -247,67 +262,89 @@
           </span>
         </div>
 
-        <button
-          type="button"
-          id="btn-fit-tree"
-          class="action-btn"
-          aria-pressed="true"
-          title="Alternar entre ajustar el árbol a la pantalla o vista detallada"
-        >
-          <span>⤢ Vista detallada</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="btn-toggle-3d"
+            class="action-btn action-btn--primary"
+            aria-pressed="true"
+            title="Activar o desactivar perspectiva espacial 3D"
+          >
+            <span>🧊 Vista 3D</span>
+          </button>
+          <button
+            type="button"
+            id="btn-fit-tree"
+            class="action-btn"
+            aria-pressed="true"
+            title="Alternar entre ajustar el árbol a la pantalla o vista detallada"
+          >
+            <span>⤢ Vista detallada</span>
+          </button>
+        </div>
       </div>
 
-      <div id="tree-scroll-container" class="w-full overflow-x-auto overflow-y-hidden">
-        <div id="tree-wrapper" class="mx-auto tree-wrapper--fit">
-          <svg id="morse-tree-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Árbol binario interactivo de Código Morse">
-            <defs>
-              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="5" result="blur"/>
-                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-              </filter>
-              <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="9" result="blur"/>
-                <feMerge>
-                  <feMergeNode in="blur"/>
-                  <feMergeNode in="blur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-              <filter id="node-shadow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(0,0,0,0.55)"/>
-              </filter>
-              <radialGradient id="node-gradient" cx="38%" cy="30%">
-                <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
-                <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
-              </radialGradient>
-              <radialGradient id="node-highlight-gradient" cx="38%" cy="30%">
-                <stop offset="0%" stop-color="rgba(100,210,255,0.42)"/>
-                <stop offset="100%" stop-color="rgba(0,113,227,0.18)"/>
-              </radialGradient>
-              <radialGradient id="root-gradient" cx="38%" cy="30%">
-                <stop offset="0%" stop-color="rgba(160,195,255,0.28)"/>
-                <stop offset="100%" stop-color="rgba(94,92,230,0.12)"/>
-              </radialGradient>
-            </defs>
-            <g id="edges-group"></g>
-            <g id="edge-labels-group"></g>
-            <g id="nodes-group"></g>
-          </svg>
+      <!-- 3D Stage Container -->
+      <div id="tree-stage" class="tree-stage-3d mx-auto max-w-[1460px]">
+        <div id="tree-board-3d" class="tree-board-3d is-3d-active">
+          <div id="tree-glare-3d" class="tree-glare-3d" aria-hidden="true"></div>
+          <div id="tree-scroll-container" class="w-full overflow-x-auto overflow-y-hidden">
+            <div id="tree-wrapper" class="mx-auto tree-wrapper--fit">
+              <svg id="morse-tree-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Árbol binario interactivo de Código Morse en 3D">
+                <defs>
+                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="blur"/>
+                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                  </filter>
+                  <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="7" result="blur"/>
+                    <feMerge>
+                      <feMergeNode in="blur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  <filter id="node-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="rgba(15,23,42,0.16)"/>
+                  </filter>
+                  <!-- 3D Ceramic Pearl Node -->
+                  <radialGradient id="node-gradient" cx="32%" cy="28%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="55%" stop-color="#f1f5f9"/>
+                    <stop offset="100%" stop-color="#cbd5e1"/>
+                  </radialGradient>
+                  <!-- 3D Highlighted Sapphire Node -->
+                  <radialGradient id="node-highlight-gradient" cx="32%" cy="28%">
+                    <stop offset="0%" stop-color="#e0f2fe"/>
+                    <stop offset="48%" stop-color="#7dd3fc"/>
+                    <stop offset="100%" stop-color="#0284c7"/>
+                  </radialGradient>
+                  <!-- 3D Root Silver-Indigo Sphere -->
+                  <radialGradient id="root-gradient" cx="32%" cy="28%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="55%" stop-color="#dbeafe"/>
+                    <stop offset="100%" stop-color="#93c5fd"/>
+                  </radialGradient>
+                </defs>
+                <g id="edges-group"></g>
+                <g id="edge-labels-group"></g>
+                <g id="nodes-group"></g>
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </main>
 
     <!-- Footer Hint -->
     <footer class="relative z-20 text-center pb-8 px-4 select-none">
-      <p class="text-[11px] font-normal text-white/35 tracking-wide">
-        Haz clic en cualquier nodo del árbol o usa <kbd class="kbd-hint">Espacio</kbd>, <kbd class="kbd-hint">Backspace</kbd> y <kbd class="kbd-hint">Enter</kbd>
+      <p class="text-[11px] font-normal text-[#86868b] tracking-wide">
+        Mueve el cursor sobre el tablero 3D, haz clic en un nodo o usa <kbd class="kbd-hint">Espacio</kbd>, <kbd class="kbd-hint">Backspace</kbd> y <kbd class="kbd-hint">Enter</kbd>
       </p>
     </footer>
   </div>
 
   <!-- Screen Dimming Overlay -->
-  <div id="drawer-overlay" class="fixed inset-0 bg-black/55 backdrop-blur-md z-40 hidden transition-opacity duration-300 opacity-0" aria-hidden="true"></div>
+  <div id="drawer-overlay" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" aria-hidden="true"></div>
 
   <!-- Left Cupertino Side Sheet: Bidirectional Translator -->
   <aside
@@ -318,10 +355,10 @@
     aria-labelledby="drawer-left-title"
     aria-hidden="true"
   >
-    <div class="flex items-center justify-between border-b border-white/10 pb-3.5">
+    <div class="flex items-center justify-between border-b border-slate-900/10 pb-3.5">
       <div class="flex items-center gap-2.5">
-        <span class="w-2.5 h-2.5 rounded-full bg-[#2997ff]" aria-hidden="true"></span>
-        <h2 id="drawer-left-title" class="text-xs font-semibold tracking-[0.16em] uppercase text-white/90">Traductor Bidireccional</h2>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#0071e3]" aria-hidden="true"></span>
+        <h2 id="drawer-left-title" class="text-xs font-semibold tracking-[0.16em] uppercase text-[#1d1d1f]">Traductor Bidireccional</h2>
       </div>
       <button type="button" id="btn-close-left" class="apple-icon-btn !w-8 !h-8" aria-label="Cerrar traductor">
         <span class="text-xs leading-none" aria-hidden="true">✕</span>
@@ -329,7 +366,7 @@
     </div>
 
     <div class="flex flex-col gap-2.5 mt-5">
-      <label for="translator-text-input" class="text-[11px] font-medium tracking-wider uppercase text-white/50">
+      <label for="translator-text-input" class="text-[11px] font-semibold tracking-wider uppercase text-[#515154]">
         Texto o Código Morse (ej. SOS o ... --- ...):
       </label>
       <input
@@ -342,7 +379,7 @@
 
     <div class="flex flex-col gap-2.5 mt-5">
       <div class="flex items-center justify-between gap-2">
-        <span id="translator-output-label" class="text-[11px] font-medium tracking-wider uppercase text-white/50">Morse Resultante:</span>
+        <span id="translator-output-label" class="text-[11px] font-semibold tracking-wider uppercase text-[#515154]">Morse Resultante:</span>
         <div class="flex items-center gap-1.5">
           <button type="button" id="btn-copy-translated" class="action-btn">
             <span>📋 Copiar</span>
@@ -352,13 +389,13 @@
           </button>
         </div>
       </div>
-      <div class="bg-white/[0.04] border border-white/10 rounded-2xl p-4 min-h-[68px] flex items-center justify-start overflow-x-auto">
-        <p id="translator-morse-output" class="text-lg font-mono font-normal text-[#64d2ff] tracking-[0.26em] whitespace-nowrap">- - -</p>
+      <div class="bg-slate-900/[0.04] border border-slate-900/10 rounded-2xl p-4 min-h-[68px] flex items-center justify-start overflow-x-auto">
+        <p id="translator-morse-output" class="text-lg font-mono font-semibold text-[#0071e3] tracking-[0.26em] whitespace-nowrap">- - -</p>
       </div>
     </div>
 
-    <p class="mt-auto pt-4 text-[11px] text-white/35 leading-relaxed border-t border-white/10">
-      Escribe letras para convertirlas a Morse, o introduce puntos (<code class="text-white/60">.</code>) y guiones (<code class="text-white/60">-</code>) separados por espacios para decodificar texto al instante.
+    <p class="mt-auto pt-4 text-[11px] text-[#6e6e73] leading-relaxed border-t border-slate-900/10">
+      Escribe letras para convertirlas a Morse, o introduce puntos (<code class="text-[#1d1d1f] font-semibold">.</code>) y guiones (<code class="text-[#1d1d1f] font-semibold">-</code>) separados por espacios para decodificar texto al instante.
     </p>
   </aside>
 
@@ -371,10 +408,10 @@
     aria-labelledby="drawer-right-title"
     aria-hidden="true"
   >
-    <div class="flex items-center justify-between border-b border-white/10 pb-3.5">
+    <div class="flex items-center justify-between border-b border-slate-900/10 pb-3.5">
       <div class="flex items-center gap-2.5">
         <span class="w-2.5 h-2.5 rounded-full bg-[#5e5ce6]" aria-hidden="true"></span>
-        <h2 id="drawer-right-title" class="text-xs font-semibold tracking-[0.16em] uppercase text-white/90">Frases Clave</h2>
+        <h2 id="drawer-right-title" class="text-xs font-semibold tracking-[0.16em] uppercase text-[#1d1d1f]">Frases Clave</h2>
       </div>
       <button type="button" id="btn-close-right" class="apple-icon-btn !w-8 !h-8" aria-label="Cerrar frases clave">
         <span class="text-xs leading-none" aria-hidden="true">✕</span>
@@ -382,10 +419,10 @@
     </div>
 
     <!-- Category Toggle -->
-    <div class="flex items-center justify-between bg-white/[0.04] border border-white/10 rounded-2xl px-3.5 py-3 mt-5">
-      <span class="text-[11px] font-medium tracking-wider uppercase text-white/50">Categoría</span>
+    <div class="flex items-center justify-between bg-slate-900/[0.04] border border-slate-900/10 rounded-2xl px-3.5 py-3 mt-5">
+      <span class="text-[11px] font-semibold tracking-wider uppercase text-[#515154]">Categoría</span>
       <div class="flex items-center gap-3">
-        <label for="phrase-category-toggle" id="phrase-category-label" class="text-xs font-medium text-white/85 cursor-pointer">Emergencia</label>
+        <label for="phrase-category-toggle" id="phrase-category-label" class="text-xs font-semibold text-[#1d1d1f] cursor-pointer">Emergencia</label>
         <label class="apple-switch">
           <input type="checkbox" id="phrase-category-toggle" aria-labelledby="phrase-category-label">
           <span class="apple-switch-track apple-switch-track--indigo" aria-hidden="true">
