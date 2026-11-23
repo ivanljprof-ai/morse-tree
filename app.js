@@ -1,5 +1,5 @@
 // ============================================================
-// Morse Code Binary Tree — Interactive Decoder & Translator
+// Morse Studio — Interactive Binary Tree Decoder & Translator
 // ============================================================
 
 (() => {
@@ -13,122 +13,158 @@
   const NODE_RADII = [30, 26, 24, 22, 19];
   const FONT_SIZES = [14, 14, 13, 12, 11];
 
-  // ---- Input timing (ms) ----
-  const DASH_THRESHOLD = 180;   // Hold > 180ms → dash, else dot
-  const DECODE_DELAY   = 700;   // After 700ms silence → decode letter
+  // ---- Input Timing (ms) ----
+  const DASH_THRESHOLD = 180; // Hold >= 180ms -> dash, else dot
+  const DECODE_DELAY = 700;   // After 700ms silence -> decode letter
 
-  // ---- Morse tree data (1-indexed array) ----
-  // Left child = dash (–), Right child = dot (·)
+  // ---- Morse Binary Tree (1-indexed heap layout) ----
+  // Left child (2*i) = dash (—), Right child (2*i + 1) = dot (·)
   const TREE = [
     null,
-    { ch: '⌂', code: '' },        // 1  root
-    { ch: 'T', code: '−' },       // 2
-    { ch: 'E', code: '·' },       // 3
-    { ch: 'M', code: '−−' },      // 4
-    { ch: 'N', code: '−·' },      // 5
-    { ch: 'A', code: '·−' },      // 6
-    { ch: 'I', code: '··' },      // 7
-    { ch: 'O', code: '−−−' },     // 8
-    { ch: 'G', code: '−−·' },     // 9
-    { ch: 'K', code: '−·−' },     // 10
-    { ch: 'D', code: '−··' },     // 11
-    { ch: 'W', code: '·−−' },     // 12
-    { ch: 'R', code: '·−·' },     // 13
-    { ch: 'U', code: '··−' },     // 14
-    { ch: 'S', code: '···' },     // 15
-    null,                          // 16
-    null,                          // 17
-    { ch: 'Q', code: '−−·−' },    // 18
-    { ch: 'Z', code: '−−··' },    // 19
-    { ch: 'Y', code: '−·−−' },    // 20
-    { ch: 'C', code: '−·−·' },    // 21
-    { ch: 'X', code: '−··−' },    // 22
-    { ch: 'B', code: '−···' },    // 23
-    { ch: 'J', code: '·−−−' },    // 24
-    { ch: 'P', code: '·−−·' },    // 25
-    null,                          // 26
-    { ch: 'L', code: '·−··' },    // 27
-    null,                          // 28
-    { ch: 'F', code: '··−·' },    // 29
-    { ch: 'V', code: '···−' },    // 30
-    { ch: 'H', code: '····' },    // 31
+    { ch: '⌂', code: '' },       // 1  root
+    { ch: 'T', code: '—' },      // 2
+    { ch: 'E', code: '·' },      // 3
+    { ch: 'M', code: '——' },     // 4
+    { ch: 'N', code: '—·' },     // 5
+    { ch: 'A', code: '·—' },     // 6
+    { ch: 'I', code: '··' },     // 7
+    { ch: 'O', code: '———' },    // 8
+    { ch: 'G', code: '——·' },    // 9
+    { ch: 'K', code: '—·—' },    // 10
+    { ch: 'D', code: '—··' },    // 11
+    { ch: 'W', code: '·——' },    // 12
+    { ch: 'R', code: '·—·' },    // 13
+    { ch: 'U', code: '··—' },    // 14
+    { ch: 'S', code: '···' },    // 15
+    null,                        // 16
+    null,                        // 17
+    { ch: 'Q', code: '——·—' },   // 18
+    { ch: 'Z', code: '——··' },   // 19
+    { ch: 'Y', code: '—·——' },   // 20
+    { ch: 'C', code: '—·—·' },   // 21
+    { ch: 'X', code: '—··—' },   // 22
+    { ch: 'B', code: '—···' },   // 23
+    { ch: 'J', code: '·———' },   // 24
+    { ch: 'P', code: '·——·' },   // 25
+    null,                        // 26
+    { ch: 'L', code: '·—··' },   // 27
+    null,                        // 28
+    { ch: 'F', code: '··—·' },   // 29
+    { ch: 'V', code: '···—' },   // 30
+    { ch: 'H', code: '····' },   // 31
   ];
 
-  // Raw morse (dots/dashes) for audio playback
   const MORSE_RAW = {
-    'T': '-', 'E': '.', 'M': '--', 'N': '-.', 'A': '.-', 'I': '..',
-    'O': '---', 'G': '--.', 'K': '-.-', 'D': '-..', 'W': '.--',
-    'R': '.-.', 'U': '..-', 'S': '...', 'Q': '--.-', 'Z': '--..',
-    'Y': '-.--', 'C': '-.-.', 'X': '-..-', 'B': '-...', 'J': '.---',
-    'P': '.--.', 'L': '.-..', 'F': '..-.', 'V': '...-', 'H': '....',
+    T: '-', E: '.', M: '--', N: '-.', A: '.-', I: '..',
+    O: '---', G: '--.', K: '-.-', D: '-..', W: '.--',
+    R: '.-.', U: '..-', S: '...', Q: '--.-', Z: '--..',
+    Y: '-.--', C: '-.-.', X: '-..-', B: '-...', J: '.---',
+    P: '.--.', L: '.-..', F: '..-.', V: '...-', H: '....',
   };
 
-  // Reverse lookup: raw morse string → letter
+  const NATO_PHONETIC = {
+    A: 'Alfa', B: 'Bravo', C: 'Charlie', D: 'Delta', E: 'Echo',
+    F: 'Foxtrot', G: 'Golf', H: 'Hotel', I: 'India', J: 'Juliett',
+    K: 'Kilo', L: 'Lima', M: 'Mike', N: 'November', O: 'Oscar',
+    P: 'Papa', Q: 'Quebec', R: 'Romeo', S: 'Sierra', T: 'Tango',
+    U: 'Uniform', V: 'Victor', W: 'Whiskey', X: 'X-ray', Y: 'Yankee',
+    Z: 'Zulu',
+  };
+
   const MORSE_TO_LETTER = {};
   for (const [letter, code] of Object.entries(MORSE_RAW)) {
     MORSE_TO_LETTER[code] = letter;
   }
 
-  // Predefined key phrases categorized
   const PRESET_PHRASES = {
     emergencia: [
-      { text: 'SOS', morse: '··· −−− ···' },
-      { text: 'MAYDAY', morse: '−− ·− −·−− −·· ·− −·−−' },
-      { text: 'HELP', morse: '···· · ·−·· ·−−·' },
-      { text: 'SOS DE', morse: '··· −−− ···   −·· ·' },
-      { text: 'SINKING', morse: '··· ·· −· −·− ·· −· −−·' },
-      { text: 'OK', morse: '−−− −·−' }
+      { text: 'SOS', morse: '··· ——— ···' },
+      { text: 'MAYDAY', morse: '—— ·— —·—— —·· ·— —·——' },
+      { text: 'HELP', morse: '···· · ·—·· ·——·' },
+      { text: 'SOS DE', morse: '··· ——— ···   —·· ·' },
+      { text: 'SINKING', morse: '··· ·· —· —·— ·· —· ——·' },
+      { text: 'OK', morse: '——— —·—' },
     ],
     basico: [
-      { text: 'HOLA', morse: '···· −−− ·−·· ·−' },
-      { text: 'ADIOS', morse: '·− −·· ·· −−− ···' },
-      { text: 'GRACIAS', morse: '−−· ·−· ·− −·−· ·· ·− ···' },
+      { text: 'HOLA', morse: '···· ——— ·—·· ·—' },
+      { text: 'ADIOS', morse: '·— —·· ·· ——— ···' },
+      { text: 'GRACIAS', morse: '——· ·—· ·— —·—· ·· ·— ···' },
       { text: 'SI', morse: '··· ··' },
-      { text: 'NO', morse: '−· −−−' },
-      { text: 'BIENVENIDO', morse: '−··· ·· · −· ·−− · −· ·· −·· −−−' }
-    ]
+      { text: 'NO', morse: '—· ———' },
+      { text: 'BIENVENIDO', morse: '—··· ·· · —· ·—— · —· ·· —·· ———' },
+    ],
   };
 
-  // ---- DOM refs ----
-  const svg          = document.getElementById('morse-tree-svg');
-  const edgesG       = document.getElementById('edges-group');
-  const labelsG      = document.getElementById('edge-labels-group');
-  const nodesG       = document.getElementById('nodes-group');
-  const infoChar     = document.getElementById('info-char');
-  const infoCode     = document.getElementById('info-code');
-  const infoPanel    = document.getElementById('info-panel');
-  const treeWrapper  = document.getElementById('tree-wrapper');
-  const tapArea      = document.getElementById('tap-area');
+  // ---- DOM References ----
+  const appShell = document.getElementById('app-shell');
+  const svg = document.getElementById('morse-tree-svg');
+  const edgesG = document.getElementById('edges-group');
+  const labelsG = document.getElementById('edge-labels-group');
+  const nodesG = document.getElementById('nodes-group');
+
+  const infoChar = document.getElementById('info-char');
+  const infoPhonetic = document.getElementById('info-phonetic');
+  const infoCode = document.getElementById('info-code');
+  const infoPanel = document.getElementById('info-panel');
+  const btnPlayActiveNode = document.getElementById('btn-play-active-node');
+
+  const treeScrollContainer = document.getElementById('tree-scroll-container');
+  const treeWrapper = document.getElementById('tree-wrapper');
+  const btnFitTree = document.getElementById('btn-fit-tree');
+
+  const tapArea = document.getElementById('tap-area');
   const inputSymbols = document.getElementById('input-symbols');
   const inputPreview = document.getElementById('input-preview');
-  const previewChar  = document.getElementById('input-preview-char');
-  const keyFill      = document.getElementById('key-fill');
-  const decodedMsg   = document.getElementById('decoded-message');
-  const btnClear     = document.getElementById('btn-clear');
+  const previewChar = document.getElementById('input-preview-char');
+  const keyFill = document.getElementById('key-fill');
+  const decodedMsg = document.getElementById('decoded-message');
+
+  const btnInsertDot = document.getElementById('btn-insert-dot');
+  const btnInsertDash = document.getElementById('btn-insert-dash');
+  const btnPlayMessage = document.getElementById('btn-play-message');
+  const btnCopyMessage = document.getElementById('btn-copy-message');
+  const btnClear = document.getElementById('btn-clear');
   const btnWordSpace = document.getElementById('btn-word-space');
 
-  // Dashboard DOM refs
-  const translatorTextInput        = document.getElementById('translator-text-input');
-  const btnPlayTranslated          = document.getElementById('btn-play-translated');
-  const translatorMorseOutput      = document.getElementById('translator-morse-output');
-  const phraseCategoryToggle       = document.getElementById('phrase-category-toggle');
-  const phraseCategoryLabel        = document.getElementById('phrase-category-label');
+  const wpmSelect = document.getElementById('wpm-select');
+  const freqSelect = document.getElementById('freq-select');
+  const btnMuteAudio = document.getElementById('btn-mute-audio');
+  const muteIcon = document.getElementById('mute-icon');
+
+  // Translator & Presets DOM refs
+  const translatorTextInput = document.getElementById('translator-text-input');
+  const translatorOutputLabel = document.getElementById('translator-output-label');
+  const btnPlayTranslated = document.getElementById('btn-play-translated');
+  const btnCopyTranslated = document.getElementById('btn-copy-translated');
+  const translatorMorseOutput = document.getElementById('translator-morse-output');
+
+  const phraseCategoryToggle = document.getElementById('phrase-category-toggle');
+  const phraseCategoryLabel = document.getElementById('phrase-category-label');
   const predefinedPhrasesContainer = document.getElementById('predefined-phrases-container');
 
-  // Input Mode selectors
-  const inputModeToggle            = document.getElementById('input-mode-toggle');
-  const inputModeLabel             = document.getElementById('input-mode-label');
+  // Input mode toggle
+  const inputModeToggle = document.getElementById('input-mode-toggle');
+  const inputModeLabel = document.getElementById('input-mode-label');
 
-  // Side drawers DOM refs
-  const btnToggleLeftDrawer  = document.getElementById('btn-toggle-left-drawer');
+  // Drawers DOM refs
+  const btnToggleLeftDrawer = document.getElementById('btn-toggle-left-drawer');
   const btnToggleRightDrawer = document.getElementById('btn-toggle-right-drawer');
-  const drawerLeft           = document.getElementById('drawer-left');
-  const drawerRight          = document.getElementById('drawer-right');
-  const btnCloseLeft         = document.getElementById('btn-close-left');
-  const btnCloseRight        = document.getElementById('btn-close-right');
-  const drawerOverlay        = document.getElementById('drawer-overlay');
+  const drawerLeft = document.getElementById('drawer-left');
+  const drawerRight = document.getElementById('drawer-right');
+  const btnCloseLeft = document.getElementById('btn-close-left');
+  const btnCloseRight = document.getElementById('btn-close-right');
+  const drawerOverlay = document.getElementById('drawer-overlay');
 
-  // ---- Helpers ----
+  // ---- Audio & UI State ----
+  let audioCtx = null;
+  let speedMultiplier = 1;
+  let toneFreq = 680;
+  let isMuted = false;
+  let activeSelectedLetter = '';
+  let isTreeFitMode = true;
+  let lastDrawerTrigger = null;
+
+  // ---- Tree Geometry Helpers ----
   function level(i) { return Math.floor(Math.log2(i)); }
   function posInLevel(i) { return i - (1 << level(i)); }
 
@@ -136,21 +172,23 @@
     const l = level(i);
     const p = posInLevel(i);
     const count = 1 << l;
-    const x = (p + 0.5) * SVG_W / count;
+    const x = ((p + 0.5) * SVG_W) / count;
     const y = l * LEVEL_GAP + TOP_PAD;
     return { x, y, l };
   }
 
   function pathToRoot(i) {
     const path = [];
-    while (i >= 1) { path.unshift(i); i = i >> 1; }
+    while (i >= 1) {
+      path.unshift(i);
+      i >>= 1;
+    }
     return path;
   }
 
   function edgeId(parent, child) { return `edge-${parent}-${child}`; }
   function edgeLabelId(parent, child) { return `elbl-${parent}-${child}`; }
 
-  // Find tree index by letter
   function findNodeIndex(letter) {
     for (let i = 1; i < TREE.length; i++) {
       if (TREE[i] && TREE[i].ch === letter) return i;
@@ -158,15 +196,26 @@
     return null;
   }
 
-  // ---- SVG element factory ----
+  function findPartialNodeIndex(rawMorse) {
+    if (!rawMorse) return null;
+    let idx = 1;
+    for (const sym of rawMorse) {
+      idx = sym === '-' ? idx * 2 : idx * 2 + 1;
+      if (idx >= TREE.length || !TREE[idx]) return null;
+    }
+    return idx;
+  }
+
+  // ---- SVG Element Factory ----
   const NS = 'http://www.w3.org/2000/svg';
   function svgEl(tag, attrs) {
     const el = document.createElementNS(NS, tag);
-    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    for (const [k, v] of Object.entries(attrs)) {
+      el.setAttribute(k, v);
+    }
     return el;
   }
 
-  // ---- Build the tree ----
   const nodeEls = {};
   const circleEls = {};
   const labelEls = {};
@@ -174,9 +223,9 @@
   function buildTree() {
     svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
     svg.setAttribute('width', '100%');
-    svg.style.maxHeight = '68vh';
+    svg.style.maxHeight = '64vh';
 
-    // Draw edges
+    // Draw smooth cubic Bezier edges
     for (let i = 2; i < TREE.length; i++) {
       if (!TREE[i]) continue;
       const parentIdx = i >> 1;
@@ -184,24 +233,27 @@
 
       const pPos = nodePos(parentIdx);
       const cPos = nodePos(i);
+      const startY = pPos.y + NODE_RADII[pPos.l];
+      const endY = cPos.y - NODE_RADII[cPos.l];
+      const midY = (startY + endY) / 2;
 
-      const midY = (pPos.y + cPos.y) / 2;
-      const pathD = `M${pPos.x},${pPos.y + NODE_RADII[pPos.l]} L${pPos.x},${midY} L${cPos.x},${midY} L${cPos.x},${cPos.y - NODE_RADII[cPos.l]}`;
+      const pathD = `M ${pPos.x},${startY} C ${pPos.x},${midY} ${cPos.x},${midY} ${cPos.x},${endY}`;
+      const isLeft = i % 2 === 0;
 
       const path = svgEl('path', {
         d: pathD,
         id: edgeId(parentIdx, i),
         class: 'tree-edge',
+        'data-dir': isLeft ? 'dash' : 'dot',
         fill: 'none',
       });
       edgesG.appendChild(path);
 
-      const isLeft = (i % 2 === 0);
       const lx = (pPos.x + cPos.x) / 2;
       const ly = midY;
       const labelText = svgEl('text', {
         x: lx,
-        y: ly - 8,
+        y: ly - 7,
         id: edgeLabelId(parentIdx, i),
         class: 'edge-label',
       });
@@ -209,7 +261,7 @@
       labelsG.appendChild(labelText);
     }
 
-    // Draw nodes
+    // Draw tree nodes
     for (let i = 1; i < TREE.length; i++) {
       if (!TREE[i]) continue;
       const pos = nodePos(i);
@@ -221,7 +273,9 @@
         'data-idx': i,
         tabindex: '0',
         role: 'button',
-        'aria-label': `${TREE[i].ch} — Morse: ${TREE[i].code || 'Start'}`,
+        'aria-label': i === 1
+          ? 'Raíz del árbol Morse'
+          : `${TREE[i].ch} (${NATO_PHONETIC[TREE[i].ch] || ''}) — Morse: ${TREE[i].code}`,
       });
 
       const circle = svgEl('circle', {
@@ -257,15 +311,12 @@
     }
   }
 
-  // ---- Highlight path on hover ----
-  let currentHighlight = [];
-
+  // ---- Highlight Path & Dynamic Island HUD ----
   function highlightPath(idx) {
     clearHighlight();
     if (!idx || !TREE[idx]) return;
 
     const path = pathToRoot(idx);
-    currentHighlight = path;
 
     for (let i = 1; i < TREE.length; i++) {
       if (!TREE[i]) continue;
@@ -274,19 +325,25 @@
       }
     }
 
-    document.querySelectorAll('.tree-edge').forEach(e => e.classList.add('dimmed'));
-    document.querySelectorAll('.edge-label').forEach(e => e.classList.add('dimmed'));
+    document.querySelectorAll('.tree-edge').forEach((e) => e.classList.add('dimmed'));
+    document.querySelectorAll('.edge-label').forEach((e) => e.classList.add('dimmed'));
 
     for (let k = 1; k < path.length; k++) {
       const pIdx = path[k - 1];
       const cIdx = path[k];
       const edgeEl = document.getElementById(edgeId(pIdx, cIdx));
       const labelEl = document.getElementById(edgeLabelId(pIdx, cIdx));
-      if (edgeEl) { edgeEl.classList.remove('dimmed'); edgeEl.classList.add('highlighted'); }
-      if (labelEl) { labelEl.classList.remove('dimmed'); labelEl.classList.add('highlighted'); }
+      if (edgeEl) {
+        edgeEl.classList.remove('dimmed');
+        edgeEl.classList.add('highlighted');
+      }
+      if (labelEl) {
+        labelEl.classList.remove('dimmed');
+        labelEl.classList.add('highlighted');
+      }
     }
 
-    path.forEach(ni => {
+    path.forEach((ni) => {
       if (nodeEls[ni]) {
         nodeEls[ni].classList.remove('dimmed');
         circleEls[ni].classList.add('highlighted');
@@ -296,7 +353,9 @@
 
     const node = TREE[idx];
     if (node && idx !== 1) {
+      activeSelectedLetter = node.ch;
       infoChar.textContent = node.ch;
+      infoPhonetic.textContent = NATO_PHONETIC[node.ch] || 'Letra';
       infoCode.textContent = node.code || '—';
       infoPanel.classList.add('active');
     }
@@ -309,28 +368,28 @@
       circleEls[i].classList.remove('highlighted', 'active-node');
       labelEls[i].classList.remove('highlighted', 'active-label');
     }
-    document.querySelectorAll('.tree-edge').forEach(e => {
+    document.querySelectorAll('.tree-edge').forEach((e) => {
       e.classList.remove('highlighted', 'dimmed');
     });
-    document.querySelectorAll('.edge-label').forEach(e => {
+    document.querySelectorAll('.edge-label').forEach((e) => {
       e.classList.remove('highlighted', 'dimmed');
     });
+    activeSelectedLetter = '';
     infoChar.textContent = '—';
+    infoPhonetic.textContent = 'Listo';
     infoCode.textContent = '···';
     infoPanel.classList.remove('active');
-    currentHighlight = [];
   }
 
-  // ---- Morse Audio Playback ----
-  let audioCtx = null;
-
+  // ---- Audio Synthesizer ----
   function getAudioCtx() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
     return audioCtx;
   }
 
-  function playTone(durationSec, freq = 680) {
+  function playTone(durationSec, freq = toneFreq) {
+    if (isMuted) return;
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -349,23 +408,32 @@
     osc.stop(t + durationSec);
   }
 
+  function getTimingProfile() {
+    const scale = 1 / speedMultiplier;
+    return {
+      dot: 0.08 * scale,
+      dash: 0.24 * scale,
+      symbolGap: 0.08 * scale,
+      letterGap: 0.24 * scale,
+      wordGap: 0.56 * scale,
+    };
+  }
+
   function playMorse(letter) {
+    if (isMuted) return;
     const code = MORSE_RAW[letter];
     if (!code) return;
 
     const ctx = getAudioCtx();
-    const DOT = 0.08;
-    const DASH = 0.24;
-    const GAP = 0.1;
-    const FREQ = 680;
+    const { dot, dash, symbolGap } = getTimingProfile();
 
     let t = ctx.currentTime + 0.03;
     for (const sym of code) {
-      const dur = sym === '.' ? DOT : DASH;
+      const dur = sym === '.' ? dot : dash;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.value = FREQ;
+      osc.frequency.value = toneFreq;
       osc.connect(gain);
       gain.connect(ctx.destination);
 
@@ -376,75 +444,66 @@
 
       osc.start(t);
       osc.stop(t + dur);
-      t += dur + GAP;
+      t += dur + symbolGap;
     }
   }
 
-  // Play a full sentence with perfect spacing and dynamic tree path highlighting
   let activeAudioPlaybackTimeouts = [];
 
   function stopAllActivePlaybacks() {
-    activeAudioPlaybackTimeouts.forEach(t => clearTimeout(t));
+    activeAudioPlaybackTimeouts.forEach((t) => clearTimeout(t));
     activeAudioPlaybackTimeouts = [];
     clearHighlight();
   }
 
   function playMorseSentence(text) {
     stopAllActivePlaybacks();
-    
+    if (!text || !text.trim()) return;
+
     const ctx = getAudioCtx();
-    if (ctx.state === 'suspended') ctx.resume();
-    
-    const DOT = 0.08;
-    const DASH = 0.24;
-    const SYMBOL_GAP = 0.08;
-    const LETTER_GAP = 0.24;
-    const WORD_GAP = 0.56;
-    const FREQ = 680;
-    
+    const { dot, dash, symbolGap, letterGap, wordGap } = getTimingProfile();
+
     let currentTime = ctx.currentTime + 0.05;
-    let visualDelay = 50; // ms
-    
+    let visualDelay = 50;
     const uppercaseText = text.toUpperCase();
-    
+
     for (let w = 0; w < uppercaseText.length; w++) {
       const char = uppercaseText[w];
-      
+
       if (char === ' ') {
-        currentTime += WORD_GAP;
-        visualDelay += WORD_GAP * 1000;
+        currentTime += wordGap;
+        visualDelay += wordGap * 1000;
         continue;
       }
-      
+
       const code = MORSE_RAW[char];
       if (!code) continue;
-      
-      // Schedule audio for this character
+
       let charDuration = 0;
       let tempTime = currentTime;
       for (const sym of code) {
-        const dur = sym === '.' ? DOT : DASH;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        
-        osc.type = 'sine';
-        osc.frequency.value = FREQ;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        
-        gain.gain.setValueAtTime(0, tempTime);
-        gain.gain.linearRampToValueAtTime(0.25, tempTime + 0.008);
-        gain.gain.setValueAtTime(0.25, tempTime + dur - 0.008);
-        gain.gain.linearRampToValueAtTime(0, tempTime + dur);
-        
-        osc.start(tempTime);
-        osc.stop(tempTime + dur);
-        
-        tempTime += dur + SYMBOL_GAP;
-        charDuration += dur + SYMBOL_GAP;
+        const dur = sym === '.' ? dot : dash;
+        if (!isMuted) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = toneFreq;
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          gain.gain.setValueAtTime(0, tempTime);
+          gain.gain.linearRampToValueAtTime(0.25, tempTime + 0.008);
+          gain.gain.setValueAtTime(0.25, tempTime + dur - 0.008);
+          gain.gain.linearRampToValueAtTime(0, tempTime + dur);
+
+          osc.start(tempTime);
+          osc.stop(tempTime + dur);
+        }
+
+        tempTime += dur + symbolGap;
+        charDuration += dur + symbolGap;
       }
-      
-      // Highlight tree node to perfectly align with audio
+
       const currentHighlightIndex = findNodeIndex(char);
       if (currentHighlightIndex) {
         const highlightTimeout = setTimeout(() => {
@@ -461,91 +520,124 @@
         }, visualDelay);
         activeAudioPlaybackTimeouts.push(highlightTimeout);
       }
-      
-      currentTime += charDuration + LETTER_GAP;
-      visualDelay += (charDuration + LETTER_GAP) * 1000;
+
+      currentTime += charDuration + letterGap;
+      visualDelay += (charDuration + letterGap) * 1000;
     }
-    
-    // Clear final highlight after full sentence is done
+
     const endTimeout = setTimeout(() => {
       clearHighlight();
     }, visualDelay);
     activeAudioPlaybackTimeouts.push(endTimeout);
   }
 
-  // ---- Side Drawer State Controllers ----
-  function openLeftDrawer() {
-    closeRightDrawer();
-    drawerLeft.classList.add('open');
-    showOverlay();
+  // ---- Side Drawer Controllers (with inert + focus management) ----
+  function setShellInert(isInert) {
+    if (isInert) {
+      appShell.setAttribute('inert', '');
+    } else {
+      appShell.removeAttribute('inert');
+    }
   }
 
-  function closeLeftDrawer() {
+  function openLeftDrawer() {
+    closeRightDrawer(false);
+    lastDrawerTrigger = btnToggleLeftDrawer;
+    drawerLeft.classList.add('open');
+    drawerLeft.setAttribute('aria-hidden', 'false');
+    btnToggleLeftDrawer.setAttribute('aria-expanded', 'true');
+    setShellInert(true);
+    showOverlay();
+    setTimeout(() => translatorTextInput.focus(), 120);
+  }
+
+  function closeLeftDrawer(restoreFocus = true) {
     drawerLeft.classList.remove('open');
-    checkHideOverlay();
+    drawerLeft.setAttribute('aria-hidden', 'true');
+    btnToggleLeftDrawer.setAttribute('aria-expanded', 'false');
+    checkHideOverlay(restoreFocus);
   }
 
   function openRightDrawer() {
-    closeLeftDrawer();
+    closeLeftDrawer(false);
+    lastDrawerTrigger = btnToggleRightDrawer;
     drawerRight.classList.add('open');
+    drawerRight.setAttribute('aria-hidden', 'false');
+    btnToggleRightDrawer.setAttribute('aria-expanded', 'true');
+    setShellInert(true);
     showOverlay();
+    setTimeout(() => btnCloseRight.focus(), 120);
   }
 
-  function closeRightDrawer() {
+  function closeRightDrawer(restoreFocus = true) {
     drawerRight.classList.remove('open');
-    checkHideOverlay();
+    drawerRight.setAttribute('aria-hidden', 'true');
+    btnToggleRightDrawer.setAttribute('aria-expanded', 'false');
+    checkHideOverlay(restoreFocus);
   }
 
   function showOverlay() {
     drawerOverlay.classList.remove('hidden');
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       drawerOverlay.classList.add('opacity-100');
-    }, 10);
+    });
   }
 
-  function checkHideOverlay() {
-    if (!drawerLeft.classList.contains('open') && !drawerRight.classList.contains('open')) {
+  function checkHideOverlay(restoreFocus) {
+    const leftOpen = drawerLeft.classList.contains('open');
+    const rightOpen = drawerRight.classList.contains('open');
+    if (!leftOpen && !rightOpen) {
+      setShellInert(false);
       drawerOverlay.classList.remove('opacity-100');
       setTimeout(() => {
         if (!drawerLeft.classList.contains('open') && !drawerRight.classList.contains('open')) {
           drawerOverlay.classList.add('hidden');
         }
-      }, 300);
+      }, 280);
+      if (restoreFocus && lastDrawerTrigger) {
+        lastDrawerTrigger.focus();
+        lastDrawerTrigger = null;
+      }
     }
   }
 
   function closeAllDrawers() {
-    closeLeftDrawer();
-    closeRightDrawer();
+    closeLeftDrawer(true);
+    closeRightDrawer(true);
   }
 
-  // ---- Spacebar Morse Input System ----
-  let inputBuffer = '';      // Current morse sequence: dots and dashes
-  let keyDownTime = 0;       // Timestamp of spacebar press
-  let isKeyDown = false;     // Is space currently held?
-  let decodeTimer = null;    // Timer to auto-decode after silence
-  let phraseTimer = null;    // Timer to finalize and play full phrase
-  let holdInterval = null;   // Interval for updating the press bar animation
-  let message = '';          // Full decoded message
-  let isPhraseMode = false;  // Decoded whole phrase mode state
-  let pendingPhrase = '';    // Phrase accumulator string
+  // ---- Morse Telegraph Input System ----
+  let inputBuffer = '';
+  let keyDownTime = 0;
+  let isKeyDown = false;
+  let decodeTimer = null;
+  let phraseTimer = null;
+  let holdInterval = null;
+  let message = '';
+  let isPhraseMode = false;
+  let pendingPhrase = '';
 
   function updateInputDisplay() {
+    const symbolsStr = inputBuffer
+      .split('')
+      .map((s) => (s === '.' ? '·' : '—'))
+      .join(' ');
+
     if (isPhraseMode) {
-      const symbolsStr = inputBuffer
-        .split('')
-        .map(s => s === '.' ? '·' : '—')
-        .join(' ');
-      inputSymbols.textContent = pendingPhrase + (symbolsStr ? ' [' + symbolsStr + ']' : '');
+      inputSymbols.textContent = pendingPhrase + (symbolsStr ? ` [${symbolsStr}]` : '');
     } else {
-      const display = inputBuffer
-        .split('')
-        .map(s => s === '.' ? '·' : '—')
-        .join(' ');
-      inputSymbols.textContent = display;
+      inputSymbols.textContent = symbolsStr;
     }
 
-    // Live preview
+    // Live partial path highlight on the binary tree!
+    if (inputBuffer.length > 0) {
+      const partialIdx = findPartialNodeIndex(inputBuffer);
+      if (partialIdx) {
+        highlightPath(partialIdx);
+      }
+    }
+
+    // Live decoded letter preview badge
     const letter = MORSE_TO_LETTER[inputBuffer];
     if (inputBuffer.length > 0) {
       inputPreview.classList.remove('hidden');
@@ -571,10 +663,7 @@
 
   function finalizePhrase() {
     if (!pendingPhrase) return;
-    
-    // Play full acoustic/visual sequence for the newly compiled phrase segment
     playMorseSentence(pendingPhrase);
-    
     pendingPhrase = '';
     updateInputDisplay();
   }
@@ -588,18 +677,13 @@
     if (!inputBuffer) return;
 
     const letter = MORSE_TO_LETTER[inputBuffer];
-
     if (letter) {
       if (isPhraseMode) {
         pendingPhrase += letter;
-        
-        // Output to the bottom board immediately in real-time!
         message += letter;
         updateMessage();
-        
         updateInputDisplay();
-        
-        // Quiet letter trace on the tree (no sound to not disrupt input flow)
+
         const idx = findNodeIndex(letter);
         if (idx) {
           highlightPath(idx);
@@ -610,7 +694,6 @@
             if (labelEls[idx]) labelEls[idx].classList.remove('active-label');
           }, 600);
         }
-        
         resetPhraseTimer();
       } else {
         message += letter;
@@ -623,9 +706,11 @@
           circleEls[idx].classList.add('active-node', 'playing');
           labelEls[idx].classList.add('active-label');
           setTimeout(() => {
-            circleEls[idx].classList.remove('playing');
-          }, 600);
-          setTimeout(() => clearHighlight(), 2000);
+            if (circleEls[idx]) circleEls[idx].classList.remove('playing');
+          }, 500);
+          setTimeout(() => {
+            if (!inputBuffer) clearHighlight();
+          }, 1800);
         }
       }
     } else {
@@ -641,7 +726,17 @@
     decodeTimer = setTimeout(decodeCurrent, DECODE_DELAY);
   }
 
-  function onSpaceDown(e) {
+  function pushMorseSymbol(symbol) {
+    if (decodeTimer) clearTimeout(decodeTimer);
+    if (phraseTimer) clearTimeout(phraseTimer);
+
+    playTone(symbol === '.' ? 0.06 : 0.18, toneFreq);
+    inputBuffer += symbol;
+    updateInputDisplay();
+    resetDecodeTimer();
+  }
+
+  function onSpaceDown() {
     if (isKeyDown) return;
     isKeyDown = true;
     keyDownTime = performance.now();
@@ -666,7 +761,7 @@
     }, 16);
   }
 
-  function onSpaceUp(e) {
+  function onSpaceUp() {
     if (!isKeyDown) return;
     isKeyDown = false;
     tapArea.classList.remove('pressing');
@@ -677,166 +772,211 @@
 
     const elapsed = performance.now() - keyDownTime;
     const symbol = elapsed >= DASH_THRESHOLD ? '-' : '.';
-
-    playTone(symbol === '.' ? 0.06 : 0.18, 680);
-
-    inputBuffer += symbol;
-    updateInputDisplay();
-
-    resetDecodeTimer();
+    pushMorseSymbol(symbol);
   }
 
   function updateMessage() {
     decodedMsg.textContent = message;
     if (message.length > 0) {
       decodedMsg.classList.remove('letter-flash');
-      void decodedMsg.offsetWidth; 
+      void decodedMsg.offsetWidth;
       decodedMsg.classList.add('letter-flash');
     }
   }
 
-  // ---- Text Translator Live updates ----
-  function updateLiveTranslation() {
-    const text = translatorTextInput.value;
-    if (!text.trim()) {
-      translatorMorseOutput.textContent = '- - -';
-      return;
-    }
-    
-    const morseResult = text.toUpperCase().split('').map(char => {
-      if (char === ' ') return '   ';
-      const code = MORSE_RAW[char];
-      if (code) {
-        return code.replace(/\./g, '·').replace(/-/g, '—');
-      }
-      return '';
-    }).filter(x => x !== '').join(' ');
-    
-    translatorMorseOutput.textContent = morseResult || '???';
+  // ---- Bidirectional Translator (Text <-> Morse) ----
+  let translatorPlainText = '';
+
+  function normalizeMorseInput(raw) {
+    return raw
+      .replace(/·/g, '.')
+      .replace(/[—–−]/g, '-')
+      .replace(/_/g, '-');
   }
 
-  // ---- Predefined Phrases Grid populator ----
+  function isLikelyMorseInput(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+    return /^[.\-·—–−_/\s]+$/.test(trimmed);
+  }
+
+  function updateLiveTranslation() {
+    const raw = translatorTextInput.value;
+    if (!raw.trim()) {
+      translatorOutputLabel.textContent = 'Morse Resultante:';
+      translatorMorseOutput.textContent = '- - -';
+      translatorPlainText = '';
+      return;
+    }
+
+    if (isLikelyMorseInput(raw)) {
+      translatorOutputLabel.textContent = 'Texto Decodificado:';
+      const normalized = normalizeMorseInput(raw.trim());
+      const words = normalized.split(/\s*\/\s*|\s{3,}/);
+      const decodedWords = words.map((word) =>
+        word
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((code) => MORSE_TO_LETTER[code] || '?')
+          .join('')
+      );
+      const result = decodedWords.join(' ').trim();
+      translatorMorseOutput.textContent = result || '???';
+      translatorPlainText = result.replace(/\?/g, '');
+    } else {
+      translatorOutputLabel.textContent = 'Morse Resultante:';
+      const morseResult = raw
+        .toUpperCase()
+        .split('')
+        .map((char) => {
+          if (char === ' ') return '   ';
+          const code = MORSE_RAW[char];
+          return code ? code.replace(/\./g, '·').replace(/-/g, '—') : '';
+        })
+        .filter((x) => x !== '')
+        .join(' ');
+      translatorMorseOutput.textContent = morseResult || '???';
+      translatorPlainText = raw;
+    }
+  }
+
+  // ---- Copy Helper ----
+  async function copyWithFeedback(buttonEl, textValue) {
+    if (!textValue || !textValue.trim() || textValue === '- - -' || textValue === '???') return;
+    const originalHTML = buttonEl.innerHTML;
+    try {
+      await navigator.clipboard.writeText(textValue.trim());
+      buttonEl.innerHTML = '<span>✓ Copiado</span>';
+      setTimeout(() => {
+        buttonEl.innerHTML = originalHTML;
+      }, 1500);
+    } catch {
+      buttonEl.innerHTML = '<span>! Error</span>';
+      setTimeout(() => {
+        buttonEl.innerHTML = originalHTML;
+      }, 1500);
+    }
+  }
+
+  // ---- Predefined Phrases Populator ----
   function renderPresets(category) {
     predefinedPhrasesContainer.innerHTML = '';
     const phrases = PRESET_PHRASES[category] || [];
-    
-    phrases.forEach(phrase => {
+
+    phrases.forEach((phrase) => {
       const chip = document.createElement('button');
+      chip.type = 'button';
       chip.className = 'preset-chip';
-      
+
       const titleSpan = document.createElement('span');
       titleSpan.className = 'phrase-text';
       titleSpan.textContent = phrase.text;
-      
+
       const morseSpan = document.createElement('span');
       morseSpan.className = 'phrase-morse';
       morseSpan.textContent = phrase.morse;
-      
+
       chip.appendChild(titleSpan);
       chip.appendChild(morseSpan);
-      
+
       chip.addEventListener('click', () => {
-        playMorseSentence(phrase.text);
-        
-        // Populate typed area
         message = phrase.text;
         updateMessage();
+        playMorseSentence(phrase.text);
       });
-      
+
       predefinedPhrasesContainer.appendChild(chip);
     });
   }
 
-  // ---- Event listeners ----
+  // ---- Responsive Tree Fit/Zoom ----
+  function centerScroll() {
+    if (isTreeFitMode) {
+      treeScrollContainer.scrollLeft = 0;
+      return;
+    }
+    const scrollLeft = (treeWrapper.scrollWidth - treeScrollContainer.clientWidth) / 2;
+    if (scrollLeft > 0) treeScrollContainer.scrollLeft = scrollLeft;
+  }
+
+  function toggleTreeFit() {
+    isTreeFitMode = !isTreeFitMode;
+    btnFitTree.setAttribute('aria-pressed', String(isTreeFitMode));
+    if (isTreeFitMode) {
+      treeWrapper.classList.add('tree-wrapper--fit');
+      treeWrapper.classList.remove('tree-wrapper--zoomed');
+      btnFitTree.innerHTML = '<span>⤢ Vista detallada</span>';
+    } else {
+      treeWrapper.classList.remove('tree-wrapper--fit');
+      treeWrapper.classList.add('tree-wrapper--zoomed');
+      btnFitTree.innerHTML = '<span>⊡ Ajustar a pantalla</span>';
+    }
+    requestAnimationFrame(centerScroll);
+  }
+
+  // ---- Event Listeners ----
   function attachEvents() {
-    // Tree node hover/click
+    // Tree node hover, keyboard focus & click/activation
     for (let i = 1; i < TREE.length; i++) {
       if (!TREE[i]) continue;
       const g = nodeEls[i];
 
-      g.addEventListener('mouseenter', () => highlightPath(i));
-      g.addEventListener('focus', () => highlightPath(i));
-
-      g.addEventListener('click', () => {
+      const activateNode = () => {
         if (i === 1) return;
         const node = TREE[i];
+        highlightPath(i);
         playMorse(node.ch);
-
         circleEls[i].classList.add('active-node', 'playing');
         labelEls[i].classList.add('active-label');
         setTimeout(() => {
-          circleEls[i].classList.remove('playing');
+          if (circleEls[i]) circleEls[i].classList.remove('playing');
         }, 500);
+      };
+
+      g.addEventListener('mouseenter', () => highlightPath(i));
+      g.addEventListener('focus', () => highlightPath(i));
+      g.addEventListener('click', activateNode);
+      g.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          activateNode();
+        }
       });
     }
 
-    svg.addEventListener('mouseleave', clearHighlight);
+    svg.addEventListener('mouseleave', () => {
+      if (!inputBuffer) clearHighlight();
+    });
 
     document.addEventListener('touchstart', (e) => {
-      if (!svg.contains(e.target)) clearHighlight();
+      if (!svg.contains(e.target) && !infoPanel.contains(e.target) && !inputBuffer) {
+        clearHighlight();
+      }
     });
 
-    // ---- Spacebar input (global) ----
+    // Global keyboard input (Spacebar, Backspace, Enter, Escape)
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAllDrawers();
+        return;
+      }
+
+      if (drawerLeft.classList.contains('open') || drawerRight.classList.contains('open')) {
+        return;
+      }
+
       const tag = e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+        return;
+      }
 
       if (e.code === 'Space') {
+        if (e.target.closest('button') || e.target.closest('.tree-node-group')) return;
         e.preventDefault();
-        onSpaceDown(e);
-      }
-    });
-
-    document.addEventListener('keyup', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        onSpaceUp(e);
-      }
-    });
-
-    // Tap area click/touch
-    let tapDown = 0;
-    tapArea.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.action-btn')) return;
-      e.preventDefault();
-      tapDown = performance.now();
-      onSpaceDown(e);
-    });
-    tapArea.addEventListener('pointerup', (e) => {
-      if (e.target.closest('.action-btn')) return;
-      e.preventDefault();
-      keyDownTime = tapDown;
-      onSpaceUp(e);
-    });
-
-    // Clear button
-    btnClear.addEventListener('click', () => {
-      stopAllActivePlaybacks();
-      message = '';
-      inputBuffer = '';
-      pendingPhrase = '';
-      decodedMsg.textContent = '';
-      updateInputDisplay();
-      clearHighlight();
-    });
-
-    // Word space button
-    btnWordSpace.addEventListener('click', () => {
-      if (inputBuffer) decodeCurrent();
-      message += ' ';
-      updateMessage();
-      if (isPhraseMode) {
-        pendingPhrase += ' ';
-        updateInputDisplay();
-      }
-    });
-
-    // Backspace to delete last letter
-    document.addEventListener('keydown', (e) => {
-      const tag = e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
-
-      if (e.code === 'Backspace') {
+        onSpaceDown();
+      } else if (e.code === 'Backspace') {
         e.preventDefault();
         if (inputBuffer.length > 0) {
           inputBuffer = inputBuffer.slice(0, -1);
@@ -850,9 +990,8 @@
             updateInputDisplay();
           }
         }
-      }
-
-      if (e.code === 'Enter') {
+      } else if (e.code === 'Enter') {
+        if (e.target.closest('button') || e.target.closest('.tree-node-group')) return;
         e.preventDefault();
         if (inputBuffer) decodeCurrent();
         message += ' ';
@@ -864,17 +1003,101 @@
       }
     });
 
-    // ---- Live Translator events ----
-    translatorTextInput.addEventListener('input', updateLiveTranslation);
-    
-    btnPlayTranslated.addEventListener('click', () => {
-      const text = translatorTextInput.value;
-      if (text.trim()) {
-        playMorseSentence(text);
+    document.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' && isKeyDown) {
+        e.preventDefault();
+        onSpaceUp();
       }
     });
 
-    // ---- Predefined Phrases Switch Toggle ----
+    // Tap pad pointer events
+    let tapDown = 0;
+    tapArea.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      tapArea.focus();
+      tapDown = performance.now();
+      onSpaceDown();
+    });
+
+    tapArea.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      keyDownTime = tapDown;
+      onSpaceUp();
+    });
+
+    tapArea.addEventListener('pointercancel', () => {
+      if (isKeyDown) {
+        isKeyDown = false;
+        tapArea.classList.remove('pressing');
+        clearInterval(holdInterval);
+        keyFill.style.width = '0%';
+      }
+    });
+
+    // Direct dot/dash tactile buttons
+    btnInsertDot.addEventListener('click', () => pushMorseSymbol('.'));
+    btnInsertDash.addEventListener('click', () => pushMorseSymbol('-'));
+
+    // HUD & Message console actions
+    btnPlayActiveNode.addEventListener('click', () => {
+      if (activeSelectedLetter) playMorse(activeSelectedLetter);
+    });
+
+    btnPlayMessage.addEventListener('click', () => {
+      if (message.trim()) playMorseSentence(message);
+    });
+
+    btnCopyMessage.addEventListener('click', () => copyWithFeedback(btnCopyMessage, message));
+
+    btnClear.addEventListener('click', () => {
+      stopAllActivePlaybacks();
+      message = '';
+      inputBuffer = '';
+      pendingPhrase = '';
+      decodedMsg.textContent = '';
+      updateInputDisplay();
+      clearHighlight();
+    });
+
+    btnWordSpace.addEventListener('click', () => {
+      if (inputBuffer) decodeCurrent();
+      message += ' ';
+      updateMessage();
+      if (isPhraseMode) {
+        pendingPhrase += ' ';
+        updateInputDisplay();
+      }
+    });
+
+    // Audio & Tree settings
+    wpmSelect.addEventListener('change', (e) => {
+      speedMultiplier = parseFloat(e.target.value) || 1;
+    });
+
+    freqSelect.addEventListener('change', (e) => {
+      toneFreq = parseInt(e.target.value, 10) || 680;
+    });
+
+    btnMuteAudio.addEventListener('click', () => {
+      isMuted = !isMuted;
+      btnMuteAudio.setAttribute('aria-pressed', String(isMuted));
+      btnMuteAudio.setAttribute('aria-label', isMuted ? 'Activar audio' : 'Silenciar audio');
+      muteIcon.textContent = isMuted ? '🔇' : '🔊';
+    });
+
+    btnFitTree.addEventListener('click', toggleTreeFit);
+
+    // Translator events
+    translatorTextInput.addEventListener('input', updateLiveTranslation);
+    btnPlayTranslated.addEventListener('click', () => {
+      const targetText = translatorPlainText || translatorTextInput.value;
+      if (targetText.trim()) playMorseSentence(targetText);
+    });
+    btnCopyTranslated.addEventListener('click', () =>
+      copyWithFeedback(btnCopyTranslated, translatorMorseOutput.textContent)
+    );
+
+    // Toggles
     phraseCategoryToggle.addEventListener('change', (e) => {
       const checked = e.target.checked;
       const category = checked ? 'basico' : 'emergencia';
@@ -882,13 +1105,10 @@
       renderPresets(category);
     });
 
-    // ---- Input Mode Toggle (Letras vs Frases) ----
     inputModeToggle.addEventListener('change', (e) => {
       const checked = e.target.checked;
       isPhraseMode = checked;
       inputModeLabel.textContent = checked ? 'Modo Frase' : 'Letra a Letra';
-      
-      // Reset buffers on toggle to prevent leaks
       if (phraseTimer) clearTimeout(phraseTimer);
       if (decodeTimer) clearTimeout(decodeTimer);
       inputBuffer = '';
@@ -896,41 +1116,20 @@
       updateInputDisplay();
     });
 
-    // ---- Side Drawer Toggle & Close Events ----
+    // Drawers
     btnToggleLeftDrawer.addEventListener('click', openLeftDrawer);
     btnToggleRightDrawer.addEventListener('click', openRightDrawer);
-    
-    btnCloseLeft.addEventListener('click', closeLeftDrawer);
-    btnCloseRight.addEventListener('click', closeRightDrawer);
-    
+    btnCloseLeft.addEventListener('click', () => closeLeftDrawer(true));
+    btnCloseRight.addEventListener('click', () => closeRightDrawer(true));
     drawerOverlay.addEventListener('click', closeAllDrawers);
-    
-    // Support Escape key to close drawers
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeAllDrawers();
-      }
-    });
   }
 
-  // ---- Responsive: auto-center scroll ----
-  function centerScroll() {
-    const container = document.getElementById('tree-container');
-    const wrapper = treeWrapper;
-    const scrollLeft = (wrapper.scrollWidth - container.clientWidth) / 2;
-    if (scrollLeft > 0) container.scrollLeft = scrollLeft;
-  }
-
-  // ---- Init ----
   function init() {
     buildTree();
     attachEvents();
-    renderPresets('emergencia'); // default preset category
-    requestAnimationFrame(() => {
-      requestAnimationFrame(centerScroll);
-    });
+    renderPresets('emergencia');
+    requestAnimationFrame(() => requestAnimationFrame(centerScroll));
     window.addEventListener('resize', centerScroll);
-    tapArea.focus();
   }
 
   if (document.readyState === 'loading') {
